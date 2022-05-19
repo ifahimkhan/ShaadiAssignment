@@ -86,6 +86,12 @@ class DashboardFragment : Fragment(), CardStackListener {
                 }
                 Status.SUCCESS -> {
                     binding.progressBar.visibility = View.GONE
+                    adapter.submitList(it?.data?.results?.map {
+                        dashboardViewModel.convertToProfileModel(
+                            it
+                        )
+                    })
+                    adapter.notifyItemRangeInserted(1, adapter.itemCount)
 
                 }
                 Status.ERROR -> {
@@ -108,14 +114,16 @@ class DashboardFragment : Fragment(), CardStackListener {
         this.direction = direction
         val position = manager.topPosition - 1
 
-        try{
-            if (position >= 0)
+        try {
+            if (position >= 0) {
                 when (direction) {
                     Direction.Left -> dashboardViewModel.declinedProfile(adapter.currentList[position])
                     Direction.Right -> dashboardViewModel.acceptedProfile(adapter.currentList[position])
                 }
-        }catch (e:IndexOutOfBoundsException){
-            Log.e("TAG", "IndexOutOfBoundsException ${e.message}: "+position )
+                adapter.notifyItemRemoved(position)
+            }
+        } catch (e: IndexOutOfBoundsException) {
+            Log.e("TAG", "IndexOutOfBoundsException ${e.message}: " + position)
         }
 
 
