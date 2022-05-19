@@ -36,6 +36,7 @@ object AppModule {
     @Provides
     fun injectProfileDao(database: AppDatabase) = database.profileDao();
 
+
     @Singleton
     @Provides
     fun injectRetrofitAPI(): RetrofitAPI {

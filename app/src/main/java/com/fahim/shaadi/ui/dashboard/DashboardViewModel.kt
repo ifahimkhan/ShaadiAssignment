@@ -43,7 +43,7 @@ class DashboardViewModel @ViewModelInject constructor(
         }
     }
 
-    private fun convertToProfileModel(result: Results): ProfileModel {
+    public fun convertToProfileModel(result: Results): ProfileModel {
         return ProfileModel(
             name = result.name?.title + " " + result.name?.first + " " + result.name?.last,
             age = result.dob?.age,
@@ -70,6 +70,14 @@ class DashboardViewModel @ViewModelInject constructor(
             val updated = item.copy(isAccepted = 0)
             Log.e("TAG", "acceptedProfile: " + updated.isAccepted)
             repo.updateProfile(profileModel = updated)
+        }
+    }
+
+    fun deleteProfile(profileModel: ProfileModel?) {
+        profileModel?.let {
+           viewModelScope.launch {
+               repo.deleteProfile(profileModel)
+           }
         }
     }
 

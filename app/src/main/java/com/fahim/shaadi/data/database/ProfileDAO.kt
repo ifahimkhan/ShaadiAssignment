@@ -18,7 +18,7 @@ interface ProfileDAO {
     @Update
     suspend fun updateProfile(profileModel: ProfileModel);
 
-    @Query("select * from profiles where isAccepted = -1")
+    @Query("select * from profiles where isAccepted = -1" )
     fun observeProfile(): LiveData<List<ProfileModel>>
 
     @Query("select * from profiles where isAccepted = 1")

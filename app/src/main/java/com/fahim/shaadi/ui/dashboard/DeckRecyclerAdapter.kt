@@ -8,9 +8,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.RequestManager
 import com.fahim.shaadi.data.database.ProfileModel
 import com.fahim.shaadi.databinding.ProfileItemBinding
-import javax.inject.Inject
 
-class DeckRecyclerAdapter @Inject constructor(
+class DeckRecyclerAdapter constructor(
     val glide: RequestManager
 ) : ListAdapter<ProfileModel, DeckRecyclerAdapter.DeckViewHolder>(object :
     DiffUtil.ItemCallback<ProfileModel>() {

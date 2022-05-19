@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.view.animation.LinearInterpolator
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DefaultItemAnimator
@@ -28,10 +29,10 @@ class DashboardFragment : Fragment(), CardStackListener {
     // onDestroyView.
     private val binding get() = _binding!!
     private var isFirstInstance = true
-
     private val mProfileList: ArrayList<ProfileModel> = ArrayList()
     private val cardStackView by lazy { binding.cardStackView }
     private val manager by lazy { CardStackLayoutManager(requireContext(), this) }
+    private var direction: Direction = Direction.Left
     private val adapter by lazy { CardStackAdapter(AppModule.injectGlide(requireContext())) }
     private val dashboardViewModel by lazy { ViewModelProvider(this).get(DashboardViewModel::class.java) }
     override fun onCreateView(
@@ -43,7 +44,11 @@ class DashboardFragment : Fragment(), CardStackListener {
 
         _binding = FragmentDashboardBinding.inflate(inflater, container, false)
         val root: View = binding.root
+        return root
+    }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         initialize()
 
 
@@ -56,14 +61,15 @@ class DashboardFragment : Fragment(), CardStackListener {
             if (profileList != null && profileList.size > 0) {
                 textView.visibility = View.GONE
                 Log.e("TAG", "localProfileLiveData: $isFirstInstance" + profileList.size)
-                Log.e("TAG", "localProfileLiveData: ${Thread.currentThread().name}" + profileList.size)
                 mProfileList.clear()
                 mProfileList.addAll(profileList)
-
                 adapter.submitList(mProfileList)
-                cardStackView.adapter = adapter
-                adapter.notifyItemRangeInserted(0, profileList.size)
-                /*if (profileList.size == 10 || adapter.itemCount ==0) {
+
+                /*
+                    adapter = CardStackAdapter(AppModule.injectGlide(requireContext()))
+                    cardStackView.adapter = adapter
+                    adapter.notifyItemRangeInserted(0, profileList.size)
+                   */ /*if (profileList.size == 10 || adapter.itemCount ==0) {
                     adapter.submitList(mProfileList)
                     adapter.notifyItemRangeInserted(0, profileList.size)
 
@@ -90,12 +96,6 @@ class DashboardFragment : Fragment(), CardStackListener {
 
             }
         }
-        return root
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
     }
 
 
@@ -104,15 +104,21 @@ class DashboardFragment : Fragment(), CardStackListener {
     }
 
     override fun onCardSwiped(direction: Direction) {
-        Log.d("CardStackView", "onCardSwiped: p = ${manager.topPosition}, d = $direction")
-        if (manager.topPosition == adapter.itemCount - 5) {
-            dashboardViewModel.getProfiles()
-        }
+        Log.e("CardStackView", "onCardSwiped: p = ${manager.topPosition}, d = $direction")
+        this.direction = direction
         val position = manager.topPosition - 1
-        when (direction) {
-//            Direction.Left -> dashboardViewModel.declinedProfile(adapter.currentList[position])
-//            Direction.Right -> dashboardViewModel.acceptedProfile(adapter.currentList[position])
+
+        try{
+            if (position >= 0)
+                when (direction) {
+                    Direction.Left -> dashboardViewModel.declinedProfile(adapter.currentList[position])
+                    Direction.Right -> dashboardViewModel.acceptedProfile(adapter.currentList[position])
+                }
+        }catch (e:IndexOutOfBoundsException){
+            Log.e("TAG", "IndexOutOfBoundsException ${e.message}: "+position )
         }
+
+
     }
 
 
@@ -131,7 +137,9 @@ class DashboardFragment : Fragment(), CardStackListener {
 
     override fun onCardDisappeared(view: View, position: Int) {
 //        val textView = view.findViewById<TextView>(R.id.item_name)
-        Log.d("CardStackView", "onCardDisappeared: ($position) ")
+        Log.d("CardStackView", "onCardDisappeared: ($position) ${adapter.itemCount}")
+
+
     }
 
     private fun initialize() {
@@ -157,4 +165,12 @@ class DashboardFragment : Fragment(), CardStackListener {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        Log.e("TAG", "onResume: ${cardStackView.isVisible}")
+    }
+
+    override fun onStop() {
+        super.onStop()
+    }
 }
