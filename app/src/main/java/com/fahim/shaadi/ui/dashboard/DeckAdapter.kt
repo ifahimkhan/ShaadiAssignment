@@ -5,17 +5,23 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
-import android.widget.ImageView
 import android.widget.TextView
+import com.bumptech.glide.RequestManager
 import com.fahim.shaadi.R
 import com.fahim.shaadi.data.database.ProfileModel
+import javax.inject.Inject
 
 
-class DeckAdapter(profileModel: ArrayList<ProfileModel>, context: Context) :
+class DeckAdapter(profileModel: ArrayList<ProfileModel>, context: Context,glide: RequestManager):
     BaseAdapter() {
     // on below line we have created variables
     // for our array list and context.
-    private val profileModel: ArrayList<ProfileModel>
+    var profileModel: ArrayList<ProfileModel> = ArrayList()
+        set(value) {
+            field = value
+        }
+
+    private val glide: RequestManager
     private val context: Context
     override fun getCount(): Int {
         // in get count method we are returning the size of our array list.
@@ -41,6 +47,8 @@ class DeckAdapter(profileModel: ArrayList<ProfileModel>, context: Context) :
         }
         // on below line we are initializing our variables and setting data to our variables.
         (v!!.findViewById<View>(R.id.name) as TextView).setText(profileModel[position].name)
+        glide.load(profileModel[position].picture).into(v!!.findViewById(R.id.image))
+
         /*(v.findViewById<View>(R.id.idTVCourseDescription) as TextView).setText(
             profileModel[position].getCourseDescription()
         )
@@ -56,5 +64,6 @@ class DeckAdapter(profileModel: ArrayList<ProfileModel>, context: Context) :
     init {
         this.profileModel = profileModel
         this.context = context
+        this.glide = glide
     }
 }

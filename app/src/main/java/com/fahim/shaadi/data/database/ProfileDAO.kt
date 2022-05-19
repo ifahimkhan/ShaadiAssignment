@@ -9,6 +9,9 @@ interface ProfileDAO {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertProfile(profileModel: ProfileModel);
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAllProfiles(profiles:List<ProfileModel>);
+
     @Delete
     suspend fun deleteProfile(profileModel: ProfileModel);
 

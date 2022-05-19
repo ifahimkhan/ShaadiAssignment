@@ -7,11 +7,16 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.fahim.shaadi.databinding.FragmentDeclinedBinding
+import com.fahim.shaadi.dependencyInjection.AppModule
+import com.fahim.shaadi.ui.dashboard.DeckRecyclerAdapter
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
-class DeclinedFragment : Fragment() {
+class DeclinedFragment: Fragment() {
 
     private var _binding: FragmentDeclinedBinding? = null
 
@@ -24,16 +29,32 @@ class DeclinedFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val homeViewModel =
+        val viewModel =
             ViewModelProvider(this).get(DeclinedViewModel::class.java)
 
         _binding = FragmentDeclinedBinding.inflate(inflater, container, false)
         val root: View = binding.root
+        val recyclerview: RecyclerView = binding.recyclerviewDeclined
+        recyclerview.layoutManager = LinearLayoutManager(requireContext())
+        recyclerview.setHasFixedSize(true)
+        val adapter = DeckRecyclerAdapter(glide = AppModule.injectGlide(requireContext()))
+        recyclerview.adapter = adapter
 
         val textView: TextView = binding.textHome
-        homeViewModel.text.observe(viewLifecycleOwner) {
+        viewModel.text.observe(viewLifecycleOwner) {
             textView.text = it
         }
+
+        viewModel.declinedProfiles.observe(viewLifecycleOwner) {
+            adapter.submitList(it)
+            if (it.size == 0) {
+                textView.visibility = View.VISIBLE
+            } else {
+                textView.visibility = View.GONE
+            }
+        }
+
+
         return root
     }
 

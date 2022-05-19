@@ -26,18 +26,17 @@ class DashboardViewModel @ViewModelInject constructor(
     val localProfileLiveData: LiveData<List<ProfileModel>>
         get() = localProfileMutableLiveData
 
+    private val _text = MutableLiveData<String>().apply {
+        value = "No Data Available"
+    }
+    val text: LiveData<String> = _text
 
     fun getProfiles() {
-        Log.e("getProfiles", "")
         viewModelScope.launch {
             profileMutableLiveData.value = Resource.loading(null)
-
-            Log.e("getProfiles", "viewmodel")
             val data = repo.getOnlineProfile("10")
             if (data.status == Status.SUCCESS) {
-                for (result in data.data?.results!!) {
-                    repo.insertProfile(convertToProfileModel(result))
-                }
+                data.data?.let { repo.insertAllProfile(it.results.map { convertToProfileModel(it) }) }
             }
             profileMutableLiveData.value = data
 
@@ -60,24 +59,19 @@ class DashboardViewModel @ViewModelInject constructor(
 
     fun acceptedProfile(item: ProfileModel) {
         viewModelScope.launch {
-            val updated=item.copy(isAccepted = 1)
-            Log.e("TAG", "acceptedProfile: "+updated.isAccepted )
+            val updated = item.copy(isAccepted = 1)
+            Log.e("TAG", "acceptedProfile: " + updated.isAccepted)
             repo.updateProfile(profileModel = updated)
         }
     }
+
     fun declinedProfile(item: ProfileModel) {
         viewModelScope.launch {
-            val updated=item.copy(isAccepted = 0)
-            Log.e("TAG", "acceptedProfile: "+updated.isAccepted )
+            val updated = item.copy(isAccepted = 0)
+            Log.e("TAG", "acceptedProfile: " + updated.isAccepted)
             repo.updateProfile(profileModel = updated)
         }
     }
 
-
-    private val _text = MutableLiveData<String>().apply {
-        value = "No Data Available"
-    }
-
-    val text: LiveData<String> = _text
 
 }

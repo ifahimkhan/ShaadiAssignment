@@ -7,8 +7,11 @@ import com.fahim.shaadi.data.model.ApiProfileResponse
 
 interface ProfileInterface {
     suspend fun insertProfile(profileModel: ProfileModel)
+    suspend fun insertAllProfile(profileModel: List<ProfileModel>)
     suspend fun deleteProfile(profileModel: ProfileModel)
     suspend fun updateProfile(profileModel: ProfileModel)
     suspend fun getOnlineProfile(count: String): Resource<ApiProfileResponse>
     fun getLocalProfiles(): LiveData<List<ProfileModel>>
+    fun getDeclinedLocalProfiles(): LiveData<List<ProfileModel>>
+    fun getAcceptedLocalProfiles(): LiveData<List<ProfileModel>>
 }

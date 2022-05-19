@@ -3,6 +3,7 @@ package com.fahim.shaadi.dependencyInjection
 import android.content.Context
 import androidx.room.Room
 import com.bumptech.glide.Glide
+import com.bumptech.glide.RequestManager
 import com.bumptech.glide.request.RequestOptions
 import com.fahim.bookapptesting.util.Constant
 import com.fahim.shaadi.R
@@ -11,6 +12,7 @@ import com.fahim.shaadi.data.database.AppDatabase
 import com.fahim.shaadi.data.database.ProfileDAO
 import com.fahim.shaadi.data.repository.ProfileInterface
 import com.fahim.shaadi.data.repository.ProfileRepository
+import com.fahim.shaadi.ui.dashboard.DeckRecyclerAdapter
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -54,5 +56,10 @@ object AppModule {
     @Provides
     fun injectNormalRepo(dao: ProfileDAO, api: RetrofitAPI) =
         ProfileRepository(dao, api) as ProfileInterface
+
+    @Singleton
+    @Provides
+    fun injectDeckAdapter(glide: RequestManager) =
+        DeckRecyclerAdapter(glide)
 
 }

@@ -7,7 +7,6 @@ import com.fahim.shaadi.api.RetrofitAPI
 import com.fahim.shaadi.data.database.ProfileDAO
 import com.fahim.shaadi.data.database.ProfileModel
 import com.fahim.shaadi.data.model.ApiProfileResponse
-import com.google.gson.Gson
 import javax.inject.Inject
 
 class ProfileRepository @Inject constructor(
@@ -16,6 +15,10 @@ class ProfileRepository @Inject constructor(
 ) : ProfileInterface {
     override suspend fun insertProfile(profileModel: ProfileModel) {
         dao.insertProfile(profileModel)
+    }
+
+    override suspend fun insertAllProfile(profileModel: List<ProfileModel>) {
+        dao.insertAllProfiles(profileModel)
     }
 
     override suspend fun deleteProfile(profileModel: ProfileModel) {
@@ -50,6 +53,14 @@ class ProfileRepository @Inject constructor(
 
     override fun getLocalProfiles(): LiveData<List<ProfileModel>> {
         return dao.observeProfile()
+    }
+
+    override fun getDeclinedLocalProfiles(): LiveData<List<ProfileModel>> {
+        return dao.observeDeclinedProfile()
+    }
+
+    override fun getAcceptedLocalProfiles(): LiveData<List<ProfileModel>> {
+        return dao.observeAcceptedProfile()
     }
 
 
