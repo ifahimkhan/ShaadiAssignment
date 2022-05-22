@@ -5,6 +5,8 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.AccelerateInterpolator
+import android.view.animation.DecelerateInterpolator
 import android.view.animation.LinearInterpolator
 import android.widget.TextView
 import android.widget.Toast
@@ -22,7 +24,6 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class DashboardFragment : Fragment(), CardStackListener {
-
     private var _binding: FragmentDashboardBinding? = null
 
     // This property is only valid between onCreateView and
@@ -32,9 +33,10 @@ class DashboardFragment : Fragment(), CardStackListener {
     private val mProfileList: ArrayList<ProfileModel> = ArrayList()
     private val cardStackView by lazy { binding.cardStackView }
     private val manager by lazy { CardStackLayoutManager(requireContext(), this) }
-    private var direction: Direction = Direction.Left
+    private var direction: Direction = Direction.Top
     private val adapter by lazy { CardStackAdapter(AppModule.injectGlide(requireContext())) }
     private val dashboardViewModel by lazy { ViewModelProvider(this).get(DashboardViewModel::class.java) }
+    private var isAllSwiped: Boolean = false;
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -50,8 +52,6 @@ class DashboardFragment : Fragment(), CardStackListener {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initialize()
-
-
         val textView: TextView = binding.textDashboard
         dashboardViewModel.text.observe(viewLifecycleOwner) {
             textView.text = it
@@ -64,6 +64,7 @@ class DashboardFragment : Fragment(), CardStackListener {
                 mProfileList.clear()
                 mProfileList.addAll(profileList)
                 adapter.submitList(mProfileList)
+                adapter.notifyDataSetChanged()
 
                 /*
                     adapter = CardStackAdapter(AppModule.injectGlide(requireContext()))
@@ -72,7 +73,6 @@ class DashboardFragment : Fragment(), CardStackListener {
                    */ /*if (profileList.size == 10 || adapter.itemCount ==0) {
                     adapter.submitList(mProfileList)
                     adapter.notifyItemRangeInserted(0, profileList.size)
-
                 }*/
             } else {
                 textView.visibility = View.VISIBLE
@@ -86,13 +86,7 @@ class DashboardFragment : Fragment(), CardStackListener {
                 }
                 Status.SUCCESS -> {
                     binding.progressBar.visibility = View.GONE
-                    adapter.submitList(it?.data?.results?.map {
-                        dashboardViewModel.convertToProfileModel(
-                            it
-                        )
-                    })
-                    adapter.notifyItemRangeInserted(1, adapter.itemCount)
-
+                    Log.e("look", "SUCCESS: ${mProfileList.size}")
                 }
                 Status.ERROR -> {
                     binding.progressBar.visibility = View.GONE
@@ -102,6 +96,24 @@ class DashboardFragment : Fragment(), CardStackListener {
 
             }
         }
+        binding.likeButton.setOnClickListener {
+            val setting = SwipeAnimationSetting.Builder()
+                .setDirection(Direction.Right)
+                .setDuration(Duration.Normal.duration)
+                .setInterpolator(AccelerateInterpolator())
+                .build()
+            manager.setSwipeAnimationSetting(setting)
+            cardStackView.swipe()
+        }
+        binding.skipButton.setOnClickListener {
+            val setting = SwipeAnimationSetting.Builder()
+                .setDirection(Direction.Left)
+                .setDuration(Duration.Normal.duration)
+                .setInterpolator(AccelerateInterpolator())
+                .build()
+            manager.setSwipeAnimationSetting(setting)
+            cardStackView.swipe()
+        }
     }
 
 
@@ -110,22 +122,31 @@ class DashboardFragment : Fragment(), CardStackListener {
     }
 
     override fun onCardSwiped(direction: Direction) {
-        Log.e("CardStackView", "onCardSwiped: p = ${manager.topPosition}, d = $direction")
+        Log.e(
+            "CardStackView",
+            "onCardSwiped: p = ${manager.topPosition - 1} - (${adapter.itemCount}), d = $direction"
+        )
         this.direction = direction
         val position = manager.topPosition - 1
-
         try {
-            if (position >= 0) {
-                when (direction) {
-                    Direction.Left -> dashboardViewModel.declinedProfile(adapter.currentList[position])
-                    Direction.Right -> dashboardViewModel.acceptedProfile(adapter.currentList[position])
-                }
-                adapter.notifyItemRemoved(position)
+            when (direction) {
+                Direction.Left -> dashboardViewModel.declinedProfile(adapter.currentList[position])
+                Direction.Right -> dashboardViewModel.acceptedProfile(adapter.currentList[position])
+            }
+            Log.e(
+                "Look",
+                "onCardSwiped: ${position == adapter.itemCount - 1} p=$position ic = ${adapter.itemCount - 1}",
+            )
+            if (position == adapter.itemCount - 1) {
+                isAllSwiped = true
+                dashboardViewModel.updateList(isAllSwiped)
+            } else {
+                isAllSwiped = false
+
             }
         } catch (e: IndexOutOfBoundsException) {
             Log.e("TAG", "IndexOutOfBoundsException ${e.message}: " + position)
         }
-
 
     }
 
@@ -179,6 +200,7 @@ class DashboardFragment : Fragment(), CardStackListener {
     }
 
     override fun onStop() {
+        dashboardViewModel.updateList(isAllSwiped)
         super.onStop()
     }
 }

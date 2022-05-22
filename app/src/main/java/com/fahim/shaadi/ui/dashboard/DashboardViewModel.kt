@@ -12,6 +12,7 @@ import com.fahim.shaadi.data.database.ProfileModel
 import com.fahim.shaadi.data.model.ApiProfileResponse
 import com.fahim.shaadi.data.model.Results
 import com.fahim.shaadi.data.repository.ProfileInterface
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class DashboardViewModel @ViewModelInject constructor(
@@ -22,7 +23,7 @@ class DashboardViewModel @ViewModelInject constructor(
     val profileLiveData: LiveData<Resource<ApiProfileResponse>>
         get() = profileMutableLiveData
 
-    private val localProfileMutableLiveData = repo.getLocalProfiles()
+    private var localProfileMutableLiveData = repo.getLocalProfiles()
     val localProfileLiveData: LiveData<List<ProfileModel>>
         get() = localProfileMutableLiveData
 
@@ -31,7 +32,11 @@ class DashboardViewModel @ViewModelInject constructor(
     }
     val text: LiveData<String> = _text
 
+    val declinedList = ArrayList<ProfileModel>()
+    val acceptedList = ArrayList<ProfileModel>()
+
     fun getProfiles() {
+        updateList(isAllSwiped = true)
         viewModelScope.launch {
             profileMutableLiveData.value = Resource.loading(null)
             val data = repo.getOnlineProfile("10")
@@ -61,24 +66,49 @@ class DashboardViewModel @ViewModelInject constructor(
         viewModelScope.launch {
             val updated = item.copy(isAccepted = 1)
             Log.e("TAG", "acceptedProfile: " + updated.isAccepted)
-            repo.updateProfile(profileModel = updated)
+//            repo.updateProfile(profileModel = updated)
+            acceptedList.add(updated)
         }
     }
 
     fun declinedProfile(item: ProfileModel) {
-        viewModelScope.launch {
-            val updated = item.copy(isAccepted = 0)
-            Log.e("TAG", "acceptedProfile: " + updated.isAccepted)
-            repo.updateProfile(profileModel = updated)
-        }
+
+        val updated = item.copy(isAccepted = 0)
+        Log.e("TAG", "acceptedProfile: " + updated.isAccepted)
+//            repo.updateProfile(profileModel = updated)
+        declinedList.add(updated)
+
     }
 
     fun deleteProfile(profileModel: ProfileModel?) {
         profileModel?.let {
-           viewModelScope.launch {
-               repo.deleteProfile(profileModel)
-           }
+            viewModelScope.launch {
+                repo.deleteProfile(profileModel)
+            }
         }
+    }
+
+    fun updateList(isAllSwiped: Boolean) {
+
+        Log.e("Before", "updateList: ${acceptedList.size} - ${declinedList.size}")
+        viewModelScope.launch(Dispatchers.IO) {
+            val iterator: MutableIterator<ProfileModel> = declinedList.iterator()
+            while (iterator.hasNext()) {
+                val value = iterator.next()
+                repo.updateProfile(value)
+                iterator.remove()
+            }
+            val iteratorAccepted: MutableIterator<ProfileModel> = acceptedList.iterator()
+            while (iteratorAccepted.hasNext()) {
+                val value = iteratorAccepted.next()
+                repo.updateProfile(value)
+                iteratorAccepted.remove()
+            }
+            Log.e("After", "updateList: ${acceptedList.size} - ${declinedList.size}")
+
+//            if (isAllSwiped) localProfileMutableLiveData = repo.getLocalProfiles()
+        }
+
     }
 
 
